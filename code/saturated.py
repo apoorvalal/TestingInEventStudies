@@ -5,13 +5,14 @@ import pyfixest as pf
 
 
 def saturated_event_study(
-    df,
-    outcome="outcome",
-    treatment="treated",
-    time_id="time",
-    unit_id="unit",
-    ax=None,
+    df: pd.DataFrame,
+    outcome: str = "outcome",
+    treatment: str = "treated",
+    time_id: str = "time",
+    unit_id: str = "unit",
+    ax: plt.Axes = None,
 ):
+    # create interactions
     df = df.merge(
         df.assign(first_treated_period=df[time_id] * df[treatment])
         .groupby(unit_id)["first_treated_period"]
@@ -27,6 +28,7 @@ def saturated_event_study(
         df.first_treated_period, drop_first=True, prefix="cohort_dummy"
     )
     df_int = pd.concat([df, cohort_dummies], axis=1)
+    # formula
     ff = f"""
                 {outcome} ~
                 {'+'.join([f"i(rel_time, {x}, ref = -1.0)" for x in df_int.filter(like = "cohort_dummy", axis = 1).columns])}
@@ -61,12 +63,12 @@ def saturated_event_study(
 
 
 def test_treatment_heterogeneity(
-    df,
-    outcome="Y_it",
-    treatment="W_it",
-    unit_id="unit_id",
-    time_id="time_id",
-    debug=False,
+    df: pd.DataFrame,
+    outcome: str = "Y_it",
+    treatment: str = "W_it",
+    unit_id: str = "unit_id",
+    time_id: str = "time_id",
+    retmod: bool = False,
 ):
     # Get treatment timing info
     df = df.merge(
@@ -80,9 +82,6 @@ def test_treatment_heterogeneity(
         df["first_treated_period"].replace(np.nan, 0).astype("int")
     )
     df["rel_time"] = df["rel_time"].replace(np.nan, np.inf)
-    cohort_dummies = pd.get_dummies(
-        df.first_treated_period, drop_first=True, prefix="cohort_dummy"
-    )
     # Create dummies but drop TWO cohorts - one serves as base for pooled effects
     cohort_dummies = pd.get_dummies(
         df.first_treated_period, drop_first=True, prefix="cohort_dummy"
@@ -103,7 +102,7 @@ def test_treatment_heterogeneity(
     model = pf.feols(ff, df_int, vcov={"CRV1": unit_id})
     P = model.coef().shape[0]
 
-    if debug:
+    if retmod:
         return model
     mmres = model.tidy().reset_index()
     mmres[["time", "cohort"]] = mmres.Coefficient.str.split(":", expand=True)

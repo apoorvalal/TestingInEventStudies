@@ -5,7 +5,16 @@ import pyfixest as pf
 from saturated import test_treatment_heterogeneity, saturated_event_study
 
 
-def diag_plot(df, treatment_start_cohorts, base_treatment_effects):
+def mini_panelview(data, unit, time, treat):
+    treatment_quilt = data.pivot(index=unit, columns=time, values=treat)
+    treatment_quilt = treatment_quilt.drop_duplicates()
+    treatment_quilt = treatment_quilt.loc[
+        treatment_quilt.sum(axis=1).sort_values().index
+    ]
+    return treatment_quilt
+
+
+def diag_plot(df, treatment_start_cohorts, base_treatment_effects, figdim = (9, 10)):
     df2 = df.merge(
         df.assign(first_treated_period=df.time_id * df.W_it)
         .groupby("unit_id")["first_treated_period"]
@@ -46,7 +55,7 @@ def diag_plot(df, treatment_start_cohorts, base_treatment_effects):
     true_event_study = pd.concat(true_fns).reset_index()
     true_event_study.columns = ["cohort", "rel_time", "true_effect"]
     true_event_study = true_event_study.groupby("rel_time")["true_effect"].mean()
-    f, ax = plt.subplots(3, 1, figsize=(10, 9), sharex=True)
+    f, ax = plt.subplots(4, 1, figsize=figdim)
     cmp = plt.get_cmap("Set1")
     i = 0
     for k, v in true_fns.items():
@@ -85,7 +94,16 @@ def diag_plot(df, treatment_start_cohorts, base_treatment_effects):
     )
     ax[2].set_title("Saturated event study \n cohort X time interactions + 2WFE")
 
+    treat_quilt = mini_panelview(
+        df,
+        unit="unit_id",
+        time="time_id",
+        treat="W_it",
+    )
+    ax[3].imshow(treat_quilt, aspect="auto", cmap="viridis")
+
     f.tight_layout()
+
 
 ######################################################################
 def checkplot(df):
