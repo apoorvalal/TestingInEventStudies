@@ -118,3 +118,37 @@ def test_treatment_heterogeneity(
 
     test_result = model.wald_test(R=R2, distribution="chi2")
     return test_result["pvalue"]
+
+
+def test_dynamics(
+    df,
+    outcome="Y",
+    treatment="W",
+    time_id="time",
+    unit_id="unit",
+    vcv={"CRV1": "unit"},
+):
+    # Fit models
+    df = df.merge(
+        df.assign(first_treated_period=df[time_id] * df[treatment])
+        .groupby(unit_id)["first_treated_period"]
+        .apply(lambda x: x[x > 0].min()),
+        on=unit_id,
+    )
+    df["rel_time"] = df[time_id] - df["first_treated_period"]
+    df["rel_time"] = df["rel_time"].replace(np.nan, np.inf)
+    restricted = pf.feols(f"{outcome} ~ i({treatment}) | {unit_id} + {time_id}", df)
+    unrestricted = pf.feols(
+        f"{outcome} ~ i(rel_time, ref=0) | {unit_id} + {time_id}", df, vcov=vcv
+    )
+    # Get the restricted estimate
+    restricted_effect = restricted.coef().iloc[0]
+    # Create R matrix - each row tests one event study coefficient
+    # against restricted estimate
+    n_evstudy_coefs = unrestricted.coef().shape[0]
+    R = np.eye(n_evstudy_coefs)
+    # q vector is the restricted estimate repeated
+    q = np.repeat(restricted_effect, n_evstudy_coefs)
+    # Conduct Wald test
+    pv = unrestricted.wald_test(R=R, q=q, distribution="chi2")["pvalue"]
+    return pv

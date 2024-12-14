@@ -13,17 +13,13 @@
 # ---
 
 # %%
-import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-import pyfixest as pf
+import numpy as np
 
 np.random.seed(42)
-
-# %%
-from saturated import test_treatment_heterogeneity
-from plotters import checkplot, diag_plot
 from dgp import panel_dgp_stagg
+from plotters import checkplot, diag_plot
+from saturated import test_treatment_heterogeneity
 
 # %%
 num_periods = 30
@@ -63,9 +59,10 @@ Y0, Y1, W, df = dgp["Y0"], dgp["Y1"], dgp["W"], dgp["dataframe"]
 
 # %%
 checkplot(df)
-
+plt.savefig("../figtab/respecification_verify.png")
 # %%
 diag_plot(df, treatment_start_cohorts, base_treatment_effects)
+plt.savefig("../figtab/hetfx.png")
 
 # %%
 test_treatment_heterogeneity(df)
@@ -82,6 +79,7 @@ base_treatment_effects = [
     np.log(np.arange(1, num_periods - t + 1)) for t in treatment_start_cohorts
 ]
 
+# %%
 
 sigma_i, sigma_t = 2, 1
 sigma_epsilon = 1
@@ -105,6 +103,8 @@ Y0_h, Y1_h, W_h, df_h = (
 
 # %%
 diag_plot(df_h, treatment_start_cohorts, base_treatment_effects)
-
+plt.savefig("../figtab/homfx.png")
 # %%
 test_treatment_heterogeneity(df_h)
+
+# %%

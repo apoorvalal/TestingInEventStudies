@@ -107,7 +107,7 @@ def diag_plot(df, treatment_start_cohorts, base_treatment_effects, figdim = (9, 
 
 ######################################################################
 def checkplot(df):
-    mm = test_treatment_heterogeneity(df, debug=True)
+    mm = test_treatment_heterogeneity(df, retmod=True)
     mmres = mm.tidy().reset_index()
     mmres[["time", "cohort"]] = mmres.Coefficient.str.split(":", expand=True)
     mmres["time"] = mmres.time.str.extract(r"\[T\.(-?\d+\.\d+)\]").astype(float)
@@ -126,6 +126,7 @@ def checkplot(df):
         )
 
     f, ax = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+    # vanilla event study
     saturated_event_study(
         df,
         outcome="Y_it",
@@ -134,8 +135,10 @@ def checkplot(df):
         unit_id="unit_id",
         ax=ax[0],
     )
+    ax[0].set_title("Saturated event study")
     ax[1].plot(evstudy_coefs["0"], label="Cohort 0", marker=".")
     ax[1].plot(evstudy_coefs["15"] + evstudy_coefs["0"], label="Cohort 1", marker=".")
     ax[1].plot(evstudy_coefs["20"] + evstudy_coefs["0"], label="Cohort 2", marker=".")
     ax[1].axvline(-0.5, color="black", linestyle="--", alpha=0.5)
     ax[1].axhline(0, color="black", linestyle=":", alpha=0.5)
+    ax[1].set_title("Baseline + cohort effects")

@@ -14,7 +14,9 @@ def panel_dgp_stagg(
     base_treatment_effects=[0.1 * np.log(np.arange(1, 30 - 15 + 1))],
     return_dataframe=True,
     ar_coef=0.8,
+    seed = 42,
 ):
+    np.random.seed(seed)
     # unit FEs
     unit_intercepts = np.random.normal(0, sigma_unit, num_units)
     ####################################################################
