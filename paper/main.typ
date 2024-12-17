@@ -77,9 +77,10 @@ Tests considered in the following section take the form of traditional joint tes
 $
 F = frac(
 (bold(R) hat(beta) - bold(q))'
-[bold(R) hat(bb(V))) bold(R)']^(-1)
+[bold(R) hat(bb(V)) bold(R)']^(-1)
 (bold(R) hat(beta) - bold(q)),
-m) ~ F(m, n-k) " under the null hypothesis"
+m)
+~ F(m, n-k) " under the null hypothesis"
 $
 
 where $hat(bb(V))$ is the cluster-robust variance-covariance matrix of the coefficient estimates.
@@ -122,18 +123,17 @@ $ <jointreg>
 
 @jointreg returns numerically identical estimates of the cohort-level dynamic ATT as @satevent, but it allows us to test for differences in dynamic treatment effects over cohorts more easily. This is because @jointreg contains a common event study coefficient vector (a), and cohort-level deviations (b). The (b) terms can be jointly tested against the null of zero, which serves as a direct test of cohort-level treatment effect heterogeneity relative to a traditional event study. This approach is similar to omnibus tests of effect heterogeneity in cross-sectional RCTs proposed by @Ding2019-nr, testing the joint null of $gamma = 0$ in the interacted regression $y ~ tau W + X beta + W X gamma + epsilon$ serves as a test for explained effect heterogeneity. We illustrate an application of this test in @respec, where the top panel reports the saturated event study @satevent, the middle panel reports the coefficients from re-specified model @jointreg, and the bottom panel reports the sum of the common event study and cohort-specific deviations, which reproduces the saturated event study estimates exactly.
 
+#set align(left)
 #figure(
     grid(
-        columns: 2,
-        gutter: 1mm,
+        columns: (260pt, 260pt),
         [ #image("../figtab/respecification_verify_hom.png", width: 120%) ],
         [ #image("../figtab/respecification_verify_het.png", width: 120%) ],
     ),
     caption: [
     For each DGP (homogeneous - @homfx - on the left and heterogeneous - @hetfx - on the right), the top panel illustrates the traditional event study estimates from eqn @satevent, which are unbiased for the true effects. The middle panel plots the re-specified model, which plots an overall event study (first cohort : blue) and subsequent cohort deviations (second and third cohorts - which are null in this DGP). The final panel plots the sum of the blue and cohort-specific coefficients, which reproduces the event study coefficient from the first panel exactly.
-  ]
+  ],
 ) <respec>
-
 
 
 We show in the next section that this test is consistent for the null hypothesis of homogeneous dynamic treatment effects over cohorts, and that it has power against a variety of alternatives. As a concrete example, the joint $p-$value for the cohort $times$ time interactions in @homfx is $0.11$, while the joint p-value for the cohort $times$ time interactions in @hetfx is $0.000$. Thus, we can reject the null hypothesis of homogeneous dynamic treatment effects in @hetfx but not in @homfx, which is consistent with the underlying DGP. In the next section, we show through simulation studies that this test has good power to detect across-cohort heterogeneity in dynamic treatment effects in a variety of DGPs.
