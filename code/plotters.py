@@ -125,7 +125,7 @@ def checkplot(df):
             .iloc[:, 0]
         )
 
-    f, ax = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+    f, ax = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
     # vanilla event study
     saturated_event_study(
         df,
@@ -136,9 +136,19 @@ def checkplot(df):
         ax=ax[0],
     )
     ax[0].set_title("Saturated event study")
+    # cohort interactions
+    ax[1].set_title("Cohort deviation coefficients relative to first cohort")
     ax[1].plot(evstudy_coefs["0"], label="Cohort 0", marker=".")
-    ax[1].plot(evstudy_coefs["15"] + evstudy_coefs["0"], label="Cohort 1", marker=".")
-    ax[1].plot(evstudy_coefs["20"] + evstudy_coefs["0"], label="Cohort 2", marker=".")
+    ax[1].plot(evstudy_coefs["15"], label="Cohort 1", marker=".")
+    ax[1].plot(evstudy_coefs["20"], label="Cohort 2", marker=".")
     ax[1].axvline(-0.5, color="black", linestyle="--", alpha=0.5)
     ax[1].axhline(0, color="black", linestyle=":", alpha=0.5)
-    ax[1].set_title("Baseline + cohort effects")
+    # combined
+    ax[2].set_title("Aggregate cohort effects (Baseline + cohort deviations)")
+    ax[2].plot(evstudy_coefs["0"], label="Cohort 0", marker=".")
+    ax[2].plot(evstudy_coefs["15"] + evstudy_coefs["0"], label="Cohort 1", marker=".")
+    ax[2].plot(evstudy_coefs["20"] + evstudy_coefs["0"], label="Cohort 2", marker=".")
+    ax[2].axvline(-0.5, color="black", linestyle="--", alpha=0.5)
+    ax[2].axhline(0, color="black", linestyle=":", alpha=0.5)
+    ax[2].legend()
+

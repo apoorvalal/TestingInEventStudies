@@ -87,7 +87,7 @@ def test_treatment_heterogeneity(
         df.first_treated_period, drop_first=True, prefix="cohort_dummy"
     ).iloc[
         :, 1:
-    ]  # drop an additional cohort
+    ]  # drop an additional cohort - drops interactions for never treated and baseline
 
     df_int = pd.concat([df, cohort_dummies], axis=1)
 

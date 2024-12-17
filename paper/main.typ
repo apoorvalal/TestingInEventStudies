@@ -103,16 +103,37 @@ by specifying $bold(R) = bold(I)_K$ as a $T_1 times T_1$ identity matrix and $bo
 Next, we extend the approach outlined above to construct a test for across-cohort heterogeneity in dynamic treatment effects. A conventional method to estimate the cohort-level ATTs is to estimate the dynamic treatment effects separately for each cohort and then average these estimates to obtain an overall estimate of the ATT (@Abraham2020-wu, @Wooldridge2021-op, @lal2024large), which involves specifying the following regression
 
 $
-y_(i t) = alpha_i + lambda_t + sum_(g_i in cal(C)\\ infinity) sum_(s != -1)^(T) bb(1)(g_i = c) tau^(s c) Delta_(i t)^s + epsilon_(i t)
+y_(i t) = alpha_i + lambda_t +
+  underbrace(
+    sum_(g_i in cal(C)\\ infinity) sum_(s != -1)^(T) bb(1)(g_i = c) tau^(s c) Delta_(i t)^s,
+    "Cohort-Time Interactions")
+  + epsilon_(i t)
 $ <satevent>
 
 This is a saturated event study that constructs cohort $times$ time interactions for each adoption cohort (with $g_i = infinity$ never treated cohort) omitted and therefore recovers the cohort-level event studies. These coefficients are reported in the third panel in @homfx and @hetfx, and correctly uncover the true cohort-level ATTs in the presence of arbitrary heterogeneous treatment effects across cohorts (top panel). The downside of this approach, however, are twofold. First, these regressions can get unwieldy with many cohorts, and the number of parameters grows linearly with the number of cohorts. Second, the cohort level ATTs are self-contained and therefore constructing a test for equality across multiple cohorts is not straightforward. Instead, one may re-specify the saturated event-study regression @satevent as follows:
 
 $
-  y_(i t) = alpha_i + lambda_t + sum_(s != -1)^(T) gamma_s Delta_(i t)^s + sum_(c in cal(C)) sum_(s != -1)^(T) delta_s Delta_(i t)^(c s) + epsilon_(i t)
+  y_(i t) = alpha_i + lambda_t +
+    underbrace(sum_(s != -1)^(T) gamma_s Delta_(i t)^s, "(a) Common event study coefficients")
+    +
+    underbrace(sum_(c in cal(C)) sum_(s != -1)^(T) delta_s Delta_(i t)^(c s), "(b) Cohort-specific deviations")
+    + epsilon_(i t)
 $ <jointreg>
 
-@jointreg returns numerically identical estimates of the cohort-level dynamic ATT as @satevent (illustrated for the @hetfx dgp in @respec), but it allows us to test for differences in dynamic treatment effects over cohorts more easily. This is because unlike @satevent, @jointreg contains a common event study coefficient vector, and cohort-level deviations, which in turn can be jointly tested against the null of zero. This approach is similar to omnibus tests of effect heterogeneity in cross-sectional RCTs proposed by @Ding2019-nr, testing the joint null of $gamma = 0$ in the interacted regression $y ~ tau W + X beta + W X gamma + epsilon$ serves as a test for explained effect heterogeneity.
+@jointreg returns numerically identical estimates of the cohort-level dynamic ATT as @satevent, but it allows us to test for differences in dynamic treatment effects over cohorts more easily. This is because @jointreg contains a common event study coefficient vector (a), and cohort-level deviations (b). The (b) terms can be jointly tested against the null of zero, which serves as a direct test of cohort-level treatment effect heterogeneity relative to a traditional event study. This approach is similar to omnibus tests of effect heterogeneity in cross-sectional RCTs proposed by @Ding2019-nr, testing the joint null of $gamma = 0$ in the interacted regression $y ~ tau W + X beta + W X gamma + epsilon$ serves as a test for explained effect heterogeneity. We illustrate an application of this test in @respec, where the top panel reports the saturated event study @satevent, the middle panel reports the coefficients from re-specified model @jointreg, and the bottom panel reports the sum of the common event study and cohort-specific deviations, which reproduces the saturated event study estimates exactly.
+
+#figure(
+    grid(
+        columns: 2,
+        gutter: 1mm,
+        [ #image("../figtab/respecification_verify_hom.png", width: 120%) ],
+        [ #image("../figtab/respecification_verify_het.png", width: 120%) ],
+    ),
+    caption: [
+    For each DGP (homogeneous - @homfx - on the left and heterogeneous - @hetfx - on the right), the top panel illustrates the traditional event study estimates from eqn @satevent, which are unbiased for the true effects. The middle panel plots the re-specified model, which plots an overall event study (first cohort : blue) and subsequent cohort deviations (second and third cohorts - which are null in this DGP). The final panel plots the sum of the blue and cohort-specific coefficients, which reproduces the event study coefficient from the first panel exactly.
+  ]
+) <respec>
+
 
 
 We show in the next section that this test is consistent for the null hypothesis of homogeneous dynamic treatment effects over cohorts, and that it has power against a variety of alternatives. As a concrete example, the joint $p-$value for the cohort $times$ time interactions in @homfx is $0.11$, while the joint p-value for the cohort $times$ time interactions in @hetfx is $0.000$. Thus, we can reject the null hypothesis of homogeneous dynamic treatment effects in @hetfx but not in @homfx, which is consistent with the underlying DGP. In the next section, we show through simulation studies that this test has good power to detect across-cohort heterogeneity in dynamic treatment effects in a variety of DGPs.

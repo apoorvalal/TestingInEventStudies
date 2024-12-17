@@ -59,7 +59,7 @@ Y0, Y1, W, df = dgp["Y0"], dgp["Y1"], dgp["W"], dgp["dataframe"]
 
 # %%
 checkplot(df)
-# plt.savefig("../figtab/respecification_verify.png")
+plt.savefig("../figtab/respecification_verify_het.png")
 # %%
 diag_plot(df, treatment_start_cohorts, base_treatment_effects)
 pv = test_treatment_heterogeneity(df)
@@ -106,4 +106,8 @@ Y0_h, Y1_h, W_h, df_h = (
 diag_plot(df_h, treatment_start_cohorts, base_treatment_effects)
 print(test_treatment_heterogeneity(df_h))
 plt.savefig("../figtab/homfx.png")
+# %%
+checkplot(df_h)
+plt.savefig("../figtab/respecification_verify_hom.png")
+
 # %%
