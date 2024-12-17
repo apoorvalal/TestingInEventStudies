@@ -16,11 +16,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-np.random.seed(42)
 from dgp import panel_dgp_stagg
 from plotters import checkplot, diag_plot
 from saturated import test_treatment_heterogeneity
 
+np.random.seed(42)
 # %%
 num_periods = 30
 treatment_start_cohorts = [10, 15, 20]
@@ -59,13 +59,14 @@ Y0, Y1, W, df = dgp["Y0"], dgp["Y1"], dgp["W"], dgp["dataframe"]
 
 # %%
 checkplot(df)
-plt.savefig("../figtab/respecification_verify.png")
+# plt.savefig("../figtab/respecification_verify.png")
 # %%
 diag_plot(df, treatment_start_cohorts, base_treatment_effects)
+pv = test_treatment_heterogeneity(df)
+print(pv)
 plt.savefig("../figtab/hetfx.png")
 
 # %%
-test_treatment_heterogeneity(df)
 
 # %% [markdown]
 # ## homogeneous DGP
@@ -103,8 +104,6 @@ Y0_h, Y1_h, W_h, df_h = (
 
 # %%
 diag_plot(df_h, treatment_start_cohorts, base_treatment_effects)
+print(test_treatment_heterogeneity(df_h))
 plt.savefig("../figtab/homfx.png")
-# %%
-test_treatment_heterogeneity(df_h)
-
 # %%

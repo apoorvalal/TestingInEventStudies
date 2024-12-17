@@ -28,3 +28,4 @@
 *.out
 *.synctex.gz
 *.ipynb
+*.pkl

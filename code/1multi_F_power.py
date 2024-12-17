@@ -33,7 +33,7 @@ num_treated_units = [25_00, 50_00, 25_00]
 
 configs = [
     {
-        "name": "null",  # homogeneous effects
+        "name": "homogeneous",  # homogeneous effects
         "base_treatment_effects": lambda t: [
             np.log(np.arange(1, num_periods - t + 1)) for t in treatment_start_cohorts
         ],
@@ -57,20 +57,52 @@ configs = [
         ],
     },
     {
-        "name": "timing_dependent",  # effects depend on treatment timing
+        "name": "large_differences",  # effects depend on treatment timing
         "base_treatment_effects": lambda t: [
             np.log(np.arange(1, num_periods - t + 1)) * (t / 10)
             for t in treatment_start_cohorts
         ],
     },
+    {
+        "name": "selection_on_gains",  # subtle heterogeneity
+        "base_treatment_effects": lambda t: [
+            np.log(np.arange(1, num_periods - t + 1)) * (1 - i * 0.1)
+            for i, t in enumerate(treatment_start_cohorts)
+        ],
+    },
 ]
 
+additional_configs = [
+    {
+        "name": "novelty_effects",
+        "base_treatment_effects": lambda t: [
+            2 * np.exp(-0.3 * np.arange(num_periods - t)) + 0.5  # Sharp decay to 0.5
+            for t in treatment_start_cohorts
+        ],
+    },
+    {
+        "name": "activity_bias",  # First cohort different from rest
+        "base_treatment_effects": lambda t: [
+            # First cohort has strong persistent effects
+            (
+                2.5 * np.ones(num_periods - treatment_start_cohorts[0])
+                if i == 0
+                # Other cohorts have standard log pattern
+                else np.log(np.arange(1, num_periods - t + 1))
+            )
+            for i, t in enumerate(treatment_start_cohorts)
+        ],
+    },
+]
+
+configs.extend(additional_configs)
+
+
 # %%
-
-
 def plot_true_functions(
     treatment_start_cohorts,
     base_treatment_effects,
+    title,
     ax,
 ):
     true_fns = {}
@@ -94,28 +126,31 @@ def plot_true_functions(
     true_event_study = pd.concat(true_fns).reset_index()
     true_event_study.columns = ["cohort", "rel_time", "true_effect"]
     true_event_study = true_event_study.groupby("rel_time")["true_effect"].mean()
-    cmp = plt.get_cmap("Set1")
+    cmp = plt.get_cmap("viridis", len(true_fns))
     i = 0
     for k, v in true_fns.items():
         ax.plot(v, color=cmp(i), marker=".")
         i += 1
     ax.axvline(-1, color="black", linestyle="--")
     ax.axhline(0, color="black", linestyle=":")
+    ax.set_title(title)
 
 
 # %%
-f, ax = plt.subplots(2, 2, figsize=(10, 7), sharex=True, sharey=True)
+f, ax = plt.subplots(
+    3, int(np.ceil(len(configs) / 3)), figsize=(10, 7), sharex=True, sharey=True
+)
 ax = ax.flatten()
 for i, config in enumerate(configs):
     plot_true_functions(
         treatment_start_cohorts,
         config["base_treatment_effects"](treatment_start_cohorts),
+        config["name"],
         ax[i],
     )
-ax[0].set_title("DGP 1: Homogeneous Effects")
-ax[1].set_title("DGP 2: Original Heterogeneity")
-ax[2].set_title("DGP 3: Same fn class, small scalar multiplier")
-ax[3].set_title("DGP 4: Same fn class, large scalar multiplier")
+# delete last subplot
+f.delaxes(ax[-2])
+f.delaxes(ax[-1])
 f.tight_layout()
 f.savefig("../figtab/true_functions.png")
 # %%
@@ -195,15 +230,13 @@ def power_analysis(
 
 
 # %% # Run power analysis
-results = power_analysis(n_sims=500, dgp_configs=configs, n_jobs=6)
+results = power_analysis(n_sims=1000, dgp_configs=configs, n_jobs=-1)
 results
 # %%
 results.to_pickle("../tmp/rejection_rates_F.pkl")
 # %%
-
 results = pd.read_pickle("../tmp/rejection_rates_F.pkl")
-results["dgp"] = np.r_[1:4:4j].astype(int)
-results.head()
+results.loc[results.dgp == "timing_dependent", "dgp"] = "large_differences"
 # %%
 # Plot results
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), sharey=True)
@@ -212,11 +245,14 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), sharey=True)
 results.plot(kind="bar", x="dgp", y="rejection_rate", ax=ax1)
 ax1.set_title("Rejection Rate by DGP")
 ax1.set_ylabel("rejection rate")
+plt.setp(ax1.get_xticklabels(), rotation=45, ha="right")
+ax1.get_legend().remove()
 ax1.axhline(0.05, color="r", linestyle="--", label="α=0.05")
 
 # Plot p-value distributions
 ax2.boxplot([r for r in results["pvalues"]], labels=results["dgp"])
 ax2.set_title("P-value Distributions")
+plt.setp(ax2.get_xticklabels(), rotation=45, ha="right")
 # ax2.set_yscale("log")
 ax2.axhline(0.05, color="r", linestyle="--")
 
