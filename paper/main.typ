@@ -4,13 +4,11 @@
 )
 #let affls = (
   one: (
-    department: "Netflix",
+    department: "Netflix Research, Los Gatos, CA",
   ),
 )
 #set math.equation(numbering: "(1)")
 #set text(font: "Iosevka", size: 11pt)
-
-
 #show: jmlr.with(
   title: [When can we get away with using the two-way fixed effects regression?],
   authors: (authors, affls),
@@ -20,16 +18,20 @@
   keywords: ("difference in differences", "panel data", "heterogeneous treatment effects"),
   bibliography: bibliography("main.bib"),
   appendix: include "appendix.typ",
+  date: datetime(
+  year: 2025,
+  month: 01,
+  day: 7,
+)
+
 )
 
 
 
 = Introduction
 
-Consider a balanced panel-data setting with $i = 1, ..., N$ individuals observed over $t = 1, ..., T$ time periods. For each unit $i$, a binary treatment $w_(i t) := 1(t >= g_(i))$ is assigned at some adoption time $g_(i) in cal(G)$ where $cal(G) := {T} union infinity$ is the set of treatment adoption times and $g_i = infinity$ indicates a never-treated unit. We observe a scalar outcome $y_(i t) = w_(i t) y^(1)_(i t) + (1-w_(i t)) y^(0)_(i t)$, where $y^(1)_(i t)$ and $y^(0)_(i t)$ are potential outcomes under treatment and control, respectively.
-#footnote[Defining potential outcomes as $y^(w)_(i t)$ is a strong but common assumption; it requires no carryover - that the outcome for unit $i$ at time $t$ is only influenced by $i$'s current-period treatment and not treatment history. Alternative estimators such as Marginal Structural Models (MSMs) and dynamic panel models permit estimation in the presence of carryover under different strong assumptions but are considerably more computationally challenging, and as such are used infrequently.]
-
-The following two-way fixed effects regression
+Consider a balanced panel-data setting with $i = 1, ..., N$ individuals observed over $t = 1, ..., T$ time periods. For each unit $i$, a binary treatment $w_(i t) := 1(t >= g_(i))$ is assigned at some adoption time $g_(i) in cal(G)$ where $cal(G) := [T] union infinity$ is the set of treatment adoption times and $g_i = infinity$ indicates a never-treated unit. We observe a scalar outcome $y_(i t) = w_(i t) y^(1)_(i t) + (1-w_(i t)) y^(0)_(i t)$, where $y^(1)_(i t)$ and $y^(0)_(i t)$ are potential outcomes under treatment and control, respectively
+#footnote[Defining potential outcomes as $y^(w)_(i t)$ is a strong but common assumption; it requires no carryover - that the outcome for unit $i$ at time $t$ is only influenced by $i$'s current-period treatment and not treatment history. Alternative estimators such as Marginal Structural Models (MSMs) and dynamic panel models permit estimation in the presence of carryover under different strong assumptions but are considerably more computationally challenging, and as such are used infrequently.]. The following two-way fixed effects regression
 
 $
   y_(i t) = tau w_(i t) + alpha_i + lambda_t + epsilon_(i t)
@@ -42,9 +44,9 @@ $
 y_(i t) = sum_(s != -1)^(T) gamma_s Delta_(i t)^s + alpha_i + lambda_t + epsilon_(i t)
 $ <eventstudy>
 
-where $Delta_(i t)^s$ is an indicator for the $s$-th period relative to the adoption time for treated units (which in turn is the first-difference of the treatment indicator), is also widely used to estimate the dynamic ATT (@angrist2009mostly ch 5) and diagnose the validity of the parallel trends (which tends to have low power, @rambachan2023more).
+where $Delta_(i t)^s$ is an indicator for the $s$-th period relative to the adoption time for treated units (which in turn is the first-difference of the treatment indicator, @Schmidheiny2023-of). The presence of leads and lags of the switching indicator in this regression allows us to interpret the coefficients on lags as estimate the dynamic ATT (@angrist2009mostly ch 5) and coefficient on leads as a visual check of the validity of the parallel trends (although this test tends to have low power, @rambachan2023more).
 
-When $g_i in {T_0, infinity}$, the above regressions are unbiased estimates of the ATT under the assumption of parallel trends (@lechner2011estimation). However, when $g_i in {T_0, ..., T-1}$, the above regressions exhibit the 'negative weighting'/'contamination bias' problem (@Goodman-Bacon2021-ys, @De_Chaisemartin2020-za, @Goldsmith-Pinkham2024-ef) the regression coefficient on the treatment indicator, $hat(tau)$, is a weighted average of the ATT over time and across cohorts, where the weights are functions of the treatment timing distribution and the dynamic treatment effect heterogeneity and can be negative for some cohorts. This implies that the two-way fixed effects regression can fail to uncover meaningful averages of heterogeneous treatment effects over time and across adoption cohorts. The same is true for the event study coefficient vector $bold(gamma)$.
+When $g_i in {T_0, infinity}$ (one-shot adoption), the above regressions are unbiased estimates of the ATT under the assumption of parallel trends (@lechner2011estimation). However, when $g_i in {T_0, ..., T-1}$ (staggered adoption), the above regressions exhibit the 'negative weighting'/'contamination bias' problem (@Goodman-Bacon2021-ys, @De_Chaisemartin2020-za, @Goldsmith-Pinkham2024-ef). As in the cross-sectional case, the regression coefficient on the treatment indicator, $hat(tau)$, is a weighted average of the treatment effects over time and across treated cohorts, where the weights are functions of the conditional variance in the treatment. Unlike in the cross-sectional case, however, these weights can be negative for some cohorts, which yields the conclusion that the two-way fixed effects regression can fail to uncover meaningful averages of heterogeneous treatment effects over time and across adoption cohorts#footnote[In particlar, this constitutes a violation of the 'no-sign reversal property' where $hat(tau)$ is positive even if the treatment effect is strictly negative for each $(g,t)$ (@De_Chaisemartin2021-ln).]. The same is true for the event study coefficient vector $bold(gamma)$ (@Abraham2020-wu).
 
 This has prompted a explosion of research in applied econometrics on new estimators that aim to uncover the ATT in the presence of heterogeneous treatment effects over time and across adoption cohorts (@De_Chaisemartin2021-ln, @Roth2022-sz, @Arkhangelsky2023-rf for reviews). Such heterogeneity-robust estimators typically involve estimating the ATT separately for each cohort using tailored comparisons between each treated cohort and either a never-treated or not-yet-treated group, and then averaging (optionally weighted by inverse-propensity weights, e.g. @Callaway2021-gv) these estimates to obtain an overall estimate of the ATT. While their consistency properties for the ATT are well understood and they avoid the negative weighting problem by construction, they are often computationally expensive and have higher variance than the two-way fixed effects regression.
 

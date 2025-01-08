@@ -1,8 +1,7 @@
 #let std-bibliography = bibliography // Due to argument shadowing.
-
 #let font-family = ("P052",)
-
 #let font-family-mono = ("Iosevka",)
+#let citesty = "springer-mathphys"
 
 #let font-size = (
   tiny: 6pt,
@@ -16,6 +15,7 @@
   huge: 20pt,
   Huge: 25pt,
 )
+
 
 #let h(body) = {
   set text(size: font-size.normal, weight: "regular")
@@ -61,28 +61,28 @@
 
   let lines = author-affls
     .map(key => {
-        let affl = affls.at(key)
-        let affl-keys = ("department", "institution", "location")
-        return affl-keys
-          .map(key => {
-              let value = affl.at(key, default: none)
-              if key != "location" {
-                return value
-              }
+      let affl = affls.at(key)
+      let affl-keys = ("department", "institution", "location")
+      return affl-keys
+        .map(key => {
+          let value = affl.at(key, default: none)
+          if key != "location" {
+            return value
+          }
 
-              // Location and country on the same line.
-              let country = affl.at("country", default: none)
-              if country == none {
-                return value
-              } else if value == none {
-                return country
-              } else {
-                return value + ", " + country
-              }
-            })
-          .filter(it => it != none)
-          .join("\n")
-      })
+          // Location and country on the same line.
+          let country = affl.at("country", default: none)
+          if country == none {
+            return value
+          } else if value == none {
+            return country
+          } else {
+            return value + ", " + country
+          }
+        })
+        .filter(it => it != none)
+        .join("\n")
+    })
     .map(it => emph(it))
 
   return block(
@@ -113,8 +113,9 @@
   return grid(
     columns: (6fr, 4fr),
     align: (left + top, right + top),
-    row-gutter: 12pt,  // Visually perfect.
-    ..cells)
+    row-gutter: 12pt, // Visually perfect.
+    ..cells
+  )
 }
 
 #let make-title(title, authors, affls, abstract, keywords) = {
@@ -203,6 +204,10 @@
   let meta-authors = join-authors(authors.map(it => it.name))
   set document(title: title, author: meta-authors, keywords: keywords, date: date)
 
+  let format-date = (date, supplement) => {
+    return date.display(supplement + " [day]/[month]/[year]")
+  }
+
   set page(
     paper: "us-letter",
     margin: (left: 1.0in, right: 1.0in, top: 1.0in + 4.0pt, bottom: 1in),
@@ -211,11 +216,23 @@
     footer: locate(loc => {
       let pageno = counter(page).at(loc).first()
       set text(size: font-size.script)
-      grid(
-        columns: (1fr, 1fr),
-        align: (left, right),
-        [], [#pageno],
-      )
+
+      if pageno == 1 {
+        // Render short title on the first page.
+        set text(size: font-size.script)
+        set align(center)
+        grid(
+          columns: (1fr, 1fr),
+          align: (left, right),
+          [], [#format-date(date, "updated:")],
+        )
+      } else {
+        grid(
+          columns: (1fr, 1fr),
+          align: (left, right),
+          [], [#pageno],
+        )
+      }
     }),
   )
 
@@ -268,7 +285,8 @@
       it
     }
   }
-  set cite(form: "prose")
+  set cite(form: "normal", style: citesty)
+  show cite: set text(fill: maroon)
 
   set figure(gap: 14pt)
   show figure.caption: it => {
@@ -311,10 +329,10 @@
       show: h1
       block(above: 0.32in, it.body)
     }
-    // TODO(@daskol): Closest bibliography style is "bristol-university-press".
+    // TODO(@daskol): Closest bibliography citestyle is "bristol-university-press".
     set std-bibliography(
       title: [References],
-      style: "bristol-university-press",
+      style: citesty,
     )
     bibliography
   }
