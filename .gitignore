@@ -29,3 +29,5 @@
 *.synctex.gz
 *.ipynb
 *.pkl
+input/bischof_wagner/replication.pdf
+input/bischof_wagner/replication.Rmd
